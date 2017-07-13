@@ -3,47 +3,46 @@
 var articleView = {};
 
 articleView.populateFilters = function() {
+  var authors = {
+    filterName: 'author'
+    ,option: []
+  };
+  var categories = {
+    filterName: 'category'
+    ,option: []
+  };
   $('article').each(function() {
     if (!$(this).hasClass('template')) {
-      var val = $(this).find('address a').text();
-      var optionTag = `<option value="${val}">${val}</option>`;
-
-      if ($(`#author-filter option[value="${val}"]`).length === 0) {
-        $('#author-filter').append(optionTag);
-      }
-
-      val = $(this).attr('data-category');
-      optionTag = `<option value="${val}">${val}</option>`;
-      if ($(`#category-filter option[value="${val}"]`).length === 0) {
-        $('#category-filter').append(optionTag);
-      }
+      authors.option.push($(this).find('address a').text());
+      categories.option.push($(this).attr('data-category'));
     }
   });
+  var filters = [authors,categories]
+  filters.forEach(function(item){
+    var templateScript = $('#filterTemplate').html();
+    var template = Handlebars.compile(templateScript);
+    var compiledHtml = template(item);
+    $('#filters').append(compiledHtml);
+  })
 };
 
 articleView.handleAuthorFilter = function() {
-  $('#author-filter').on('change', function() {
+  $('#filters').on('change','select',function() {
     if ($(this).val()) {
       $('article').hide();
-      $(`article[data-author="${$(this).val()}"]`).fadeIn();
-    } else {
+      if(this.id === 'author-filter'){
+        $(`article[data-author="${$(this).val()}"]`).fadeIn();
+        $('#category-filter').val('');
+      }
+      if(this.id === 'category-filter'){
+        $(`article[data-category="${$(this).val()}"]`).fadeIn();
+        $('#author-filter').val('');
+      }
+    }
+    else {
       $('article').fadeIn();
       $('article.template').hide();
     }
-    $('#category-filter').val('');
-  });
-};
-
-articleView.handleCategoryFilter = function() {
-  $('#category-filter').on('change', function() {
-    if ($(this).val()) {
-      $('article').hide();
-      $(`article[data-category="${$(this).val()}"]`).fadeIn();
-    } else {
-      $('article').fadeIn();
-      $('article.template').hide();
-    }
-    $('#author-filter').val('');
   });
 };
 
@@ -75,7 +74,6 @@ articleView.setTeasers = function() {
 
 $(document).ready(function() {
   articleView.populateFilters();
-  articleView.handleCategoryFilter();
   articleView.handleAuthorFilter();
   articleView.handleMainNav();
   articleView.setTeasers();
